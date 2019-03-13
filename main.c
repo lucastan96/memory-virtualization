@@ -9,7 +9,7 @@ int main()
 
     char *address_space = malloc(ADDRESS_SPACE_SIZE);
 
-    something(123);
+    write_file();
 
     return 0;
 }

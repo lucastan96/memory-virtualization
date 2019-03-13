@@ -1,4 +1,4 @@
 #ifndef UTIL
 #define UTIL
-void something(int);
+void write_file();
 #endif
