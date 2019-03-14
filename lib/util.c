@@ -26,34 +26,49 @@ void populate_address_space(char *address_space)
     }
 }
 
-void write_file(char *address_space)
+void write_files(char *address_space)
 {
-    FILE *file = fopen("./data/physical_memory.txt", "w");
+    FILE *file_physical_memory = fopen("./data/physical_memory.txt", "w");
+    FILE *file_page_table = fopen("./data/page_table.txt", "w");
 
-    if (file == NULL)
+    if (file_physical_memory == NULL)
     {
-        printf("Error: Failed to open text file.");
+        printf("Error: Failed to open physical memory text file.");
     }
     else
     {
         int frame = 0;
-        fprintf(file, "Address   |Frame     |Content   \n");
-        fprintf(file, "----------|----------|----------\n");
+        fprintf(file_physical_memory, "Address   |Frame     |Content   |Used\n");
+        fprintf(file_physical_memory, "----------|----------|----------|----------\n");
         for (int i = 0; i < ADDRESS_SPACE_SIZE; ++i)
         {
             frame = i / 256;
             if (address_space[i] == 0)
             {
-                fprintf(file, "0x0%05x  |%-3d       |        \n", i, frame);
+                fprintf(file_physical_memory, "0x0%05x  |%-3d       |          |%d\n", i, frame, 0);
             }
             else
             {
-                fprintf(file, "0x0%05x  |%-3d       |%c       \n", i, frame, address_space[i]);
+                fprintf(file_physical_memory, "0x0%05x  |%-3d       |%c         |%d\n", i, frame, address_space[i], 1);
             }
         }
     }
 
-    fclose(file);
+    fclose(file_physical_memory);
+
+    if (file_page_table == NULL)
+    {
+        printf("Error: Failed to open page table text file.");
+    }
+    else
+    {
+        fprintf(file_page_table, "Page      |Frame     \n");
+        fprintf(file_page_table, "----------|----------\n");
+        for (int i = 0; i < PAGE_SIZE; ++i)
+        {
+            fprintf(file_page_table, "0x0%02x     |\n", i);
+        }
+    }
 }
 
 void run()
@@ -61,5 +76,5 @@ void run()
     srand(time(NULL));
     char *address_space = malloc(ADDRESS_SPACE_SIZE);
     populate_address_space(address_space);
-    write_file(address_space);
+    write_files(address_space);
 }
