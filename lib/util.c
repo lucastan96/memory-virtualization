@@ -28,7 +28,7 @@ void populate_address_space(char *address_space)
 
 void write_file(char *address_space)
 {
-    FILE *file = fopen("data/physical_memory.txt", "w");
+    FILE *file = fopen("./data/physical_memory.txt", "w");
 
     if (file == NULL)
     {
@@ -36,11 +36,20 @@ void write_file(char *address_space)
     }
     else
     {
+        int frame = 0;
         fprintf(file, "Address   |Frame     |Content   \n");
         fprintf(file, "----------|----------|----------\n");
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < ADDRESS_SPACE_SIZE; ++i)
         {
-            fprintf(file, "%d         |1         |a       \n", i);
+            frame = i / 256;
+            if (address_space[i] == 0)
+            {
+                fprintf(file, "0x0%05x  |%-3d       |        \n", i, frame);
+            }
+            else
+            {
+                fprintf(file, "0x0%05x  |%-3d       |%c       \n", i, frame, address_space[i]);
+            }
         }
     }
 
