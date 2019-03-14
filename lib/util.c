@@ -2,13 +2,31 @@
 #include <stdlib.h>
 #include <time.h>
 
-int generate_random_num()
+#define ADDRESS_SPACE_SIZE 65536 // 2 to the power of 16
+#define PAGE_SIZE 256
+
+int generate_random_num(int min, int max)
 {
-    srand(time(NULL));
-    return rand();
+    return (rand() % (max - min)) + min;
 }
 
-void write_file()
+char generate_random_char()
+{
+    const int CHAR_MAX = 126;
+    const int CHAR_MIN = 33;
+
+    return (rand() % (CHAR_MAX - CHAR_MIN)) + CHAR_MIN;
+}
+
+void populate_address_space(char *address_space)
+{
+    for (int i = 512; i < 512 + generate_random_num(2048, 20480); ++i)
+    {
+        address_space[i] = generate_random_char();
+    }
+}
+
+void write_file(char *address_space)
 {
     FILE *file = fopen("data/physical_memory.txt", "w");
 
@@ -18,9 +36,11 @@ void write_file()
     }
     else
     {
+        fprintf(file, "Address   |Frame     |Content   \n");
+        fprintf(file, "----------|----------|----------\n");
         for (int i = 0; i < 10; ++i)
         {
-            fprintf(file, "%d, ", i);
+            fprintf(file, "%d         |1         |a       \n", i);
         }
     }
 
@@ -29,15 +49,8 @@ void write_file()
 
 void run()
 {
-    const int ADDRESS_SPACE_SIZE = 65536; // 2 to the power of 16
-    const int PAGE_SIZE = 256;
-
+    srand(time(NULL));
     char *address_space = malloc(ADDRESS_SPACE_SIZE);
-
-    int random_num = generate_random_num();
-    printf("%d", random_num);
-
-    write_file();
+    populate_address_space(address_space);
+    write_file(address_space);
 }
-
-// 33 & 127
