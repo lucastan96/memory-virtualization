@@ -20,7 +20,15 @@ char generate_random_char()
 
 void populate_address_space(char *address_space)
 {
-    for (int i = 512; i < 512 + generate_random_num(2048, 20480); ++i)
+    int starting_address = generate_random_num(PAGE_SIZE * 2, ADDRESS_SPACE_SIZE);
+    int num_of_population = generate_random_num(2048, 20480);
+
+    if (starting_address + num_of_population > ADDRESS_SPACE_SIZE)
+    {
+        starting_address = starting_address - (ADDRESS_SPACE_SIZE - starting_address + num_of_population);
+    }
+
+    for (int i = starting_address; i < starting_address + num_of_population; ++i)
     {
         address_space[i] = generate_random_char();
     }
@@ -44,7 +52,7 @@ void write_files(char *address_space)
         fprintf(file_physical_memory, "----------|----------|----------|----------\n");
         for (int i = 0; i < ADDRESS_SPACE_SIZE; ++i)
         {
-            frame = i / 256;
+            frame = i / PAGE_SIZE;
             if (address_space[i] == 0)
             {
                 fprintf(file_physical_memory, "0x0%05x  |%-3d       |          |%d\n", i, frame, 0);
@@ -56,7 +64,7 @@ void write_files(char *address_space)
                 {
                     starting_frame = frame;
                 }
-                ending_frame = frame - 1;
+                ending_frame = frame;
             }
         }
     }
@@ -64,6 +72,9 @@ void write_files(char *address_space)
     fclose(file_physical_memory);
 
     FILE *file_page_table = fopen("./data/page_table.txt", "w");
+
+    printf("start: %d\n", starting_frame);
+    printf("end: %d\n", ending_frame);
 
     int present_bit = 1;
 
@@ -77,7 +88,7 @@ void write_files(char *address_space)
         fprintf(file_page_table, "----------|----------|------------\n");
         for (int i = 0; i < PAGE_SIZE; ++i)
         {
-            if (i < ending_frame)
+            if (i <= ending_frame - starting_frame)
             {
                 fprintf(file_page_table, "0x0%02x     |%-3d       |%d\n", i, starting_frame + i, present_bit);
             }
