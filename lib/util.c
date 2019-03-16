@@ -29,7 +29,6 @@ void populate_address_space(char *address_space)
 void write_files(char *address_space)
 {
     FILE *file_physical_memory = fopen("./data/physical_memory.txt", "w");
-    FILE *file_page_table = fopen("./data/page_table.txt", "w");
 
     int starting_frame = 0;
     int ending_frame = 0;
@@ -64,23 +63,27 @@ void write_files(char *address_space)
 
     fclose(file_physical_memory);
 
+    FILE *file_page_table = fopen("./data/page_table.txt", "w");
+
+    int present_bit = 1;
+
     if (file_page_table == NULL)
     {
         printf("Error: Failed to open page table text file.");
     }
     else
     {
-        fprintf(file_page_table, "Page      |Frame     \n");
-        fprintf(file_page_table, "----------|----------\n");
+        fprintf(file_page_table, "Page      |Frame     |Present Bit\n");
+        fprintf(file_page_table, "----------|----------|------------\n");
         for (int i = 0; i < PAGE_SIZE; ++i)
         {
             if (i < ending_frame)
             {
-                fprintf(file_page_table, "0x0%02x     |%d\n", i, starting_frame + i);
+                fprintf(file_page_table, "0x0%02x     |%-3d       |%d\n", i, starting_frame + i, present_bit);
             }
             else
             {
-                fprintf(file_page_table, "0x0%02x     |\n", i);
+                fprintf(file_page_table, "0x0%02x     |          |%d\n", i, present_bit);
             }
         }
     }
