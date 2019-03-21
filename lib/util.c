@@ -106,10 +106,34 @@ void write_files(unsigned char *address_space)
     fclose(file_page_table);
 }
 
+void translate_address(int user_input, unsigned char *address_space)
+{
+    int vpn = user_input >> 8;
+    int pfn = address_space[vpn];
+
+    int offset_mask = 0x00FF;
+    int offset = user_input & offset_mask;
+
+    int result = (pfn << 8) + offset;
+
+    printf("%c\n", address_space[result]);
+}
+
 void run()
 {
-    srand(time(NULL));
     unsigned char *address_space = malloc(ADDRESS_SPACE_SIZE);
+    int user_input;
+
+    srand(time(NULL));
+
     populate_address_space(address_space);
     write_files(address_space);
+
+    while (1)
+    {
+        scanf("%X", &user_input);
+        translate_address(user_input, address_space);
+    }
+
+    free(address_space);
 }
