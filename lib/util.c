@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ADDRESS_SPACE_SIZE 65536 // 2 to the power of 16
 #define PAGE_SIZE 256
+#define ADDRESS_SPACE_SIZE 65536 // 2 to the power of 16
+#define DISK_SPACE_SIZE 512
 
 int generate_random_num(int min, int max)
 {
@@ -13,13 +14,18 @@ int generate_random_num(int min, int max)
 unsigned char generate_random_char()
 {
     const int CHAR_MAX = 126;
-    const int CHAR_MIN = 33;
+    const int CHAR_MIN = 34;
 
     return (rand() % (CHAR_MAX - CHAR_MIN)) + CHAR_MIN;
 }
 
 void populate_address_space(unsigned char *address_space)
 {
+    for (int i = 0; i < ADDRESS_SPACE_SIZE; ++i)
+    {
+        address_space[i] = '!';
+    }
+
     int starting_address = generate_random_num(PAGE_SIZE * 2, ADDRESS_SPACE_SIZE);
     int num_of_population = generate_random_num(2048, 20480);
     int ending_address = starting_address + num_of_population;
@@ -44,7 +50,27 @@ void populate_address_space(unsigned char *address_space)
     }
 }
 
-void write_files(unsigned char *address_space)
+void populate_disk_space(unsigned char *disk_space, unsigned char *address_space)
+{
+    for (int i = 0; i < DISK_SPACE_SIZE; ++i)
+    {
+        disk_space[i] = generate_random_char();
+    }
+
+    int num_of_frames = DISK_SPACE_SIZE / PAGE_SIZE;
+    int current_frame = 0;
+    for (int i = 0; i < PAGE_SIZE; ++i)
+    {
+        if (address_space[i] == '!' && current_frame < num_of_frames)
+        {
+            address_space[i] = current_frame;
+            address_space[i + PAGE_SIZE] = 0;
+            ++current_frame;
+        }
+    }
+}
+
+void write_files(unsigned char *address_space, unsigned char *disk_space)
 {
     FILE *file_physical_memory = fopen("./data/physical_memory.txt", "w");
 
@@ -66,7 +92,7 @@ void write_files(unsigned char *address_space)
             }
             else
             {
-                if (address_space[i] == 0)
+                if (address_space[i] == '!')
                 {
                     fprintf(file_physical_memory, "0x0%05x  |%-3d       |          |%d\n", i, frame, 0);
                 }
@@ -80,6 +106,33 @@ void write_files(unsigned char *address_space)
 
     fclose(file_physical_memory);
 
+    FILE *file_disk_space = fopen("./data/disk_space.txt", "w");
+
+    if (file_disk_space == NULL)
+    {
+        printf("Error: Failed to open disk space text file.");
+    }
+    else
+    {
+        int frame = 0;
+        fprintf(file_disk_space, "Address   |Frame     |Content   |Used\n");
+        fprintf(file_disk_space, "----------|----------|----------|----------\n");
+        for (int i = 0; i < DISK_SPACE_SIZE; ++i)
+        {
+            frame = i / PAGE_SIZE;
+            if (disk_space[i] == 0)
+            {
+                fprintf(file_disk_space, "0x0%05x  |%-3d       |          |%d\n", i, frame, 0);
+            }
+            else
+            {
+                fprintf(file_disk_space, "0x0%05x  |%-3d       |%c         |%d\n", i, frame, disk_space[i], 1);
+            }
+        }
+    }
+
+    fclose(file_disk_space);
+
     FILE *file_page_table = fopen("./data/page_table.txt", "w");
 
     if (file_page_table == NULL)
@@ -92,13 +145,13 @@ void write_files(unsigned char *address_space)
         fprintf(file_page_table, "----------|----------|------------\n");
         for (int i = 0; i < PAGE_SIZE; ++i)
         {
-            if (address_space[i] != 0)
+            if (address_space[i] != '!')
             {
-                fprintf(file_page_table, "0x0%02x     |%-3d       |%d\n", i, address_space[i], address_space[i + 256]);
+                fprintf(file_page_table, "0x0%02x     |%-3d       |%d\n", i, address_space[i], address_space[i + PAGE_SIZE]);
             }
             else
             {
-                fprintf(file_page_table, "0x0%02x     |          |%d\n", i, 0);
+                fprintf(file_page_table, "0x0%02x     |          |\n", i);
             }
         }
     }
@@ -122,12 +175,14 @@ void translate_address(int user_input, unsigned char *address_space)
 void run()
 {
     unsigned char *address_space = malloc(ADDRESS_SPACE_SIZE);
+    unsigned char *disk_space = malloc(DISK_SPACE_SIZE);
     int user_input;
 
     srand(time(NULL));
 
     populate_address_space(address_space);
-    write_files(address_space);
+    populate_disk_space(disk_space, address_space);
+    write_files(address_space, disk_space);
 
     while (1)
     {
@@ -136,4 +191,5 @@ void run()
     }
 
     free(address_space);
+    free(disk_space);
 }
