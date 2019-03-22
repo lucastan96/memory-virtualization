@@ -129,6 +129,9 @@ void write_files(unsigned char *address_space, unsigned char *disk_space)
 
     fclose(file_disk_space);
 
+    printf("\n----------------------------------------------------\n");
+    printf("Virtual addresses in disk space:");
+
     FILE *file_page_table = fopen("./data/page_table.txt", "w");
 
     if (file_page_table == NULL)
@@ -148,20 +151,33 @@ void write_files(unsigned char *address_space, unsigned char *disk_space)
             else
             {
                 fprintf(file_page_table, "0x0%02x     |%-3d       |%d\n", i, address_space[i], address_space[i + PAGE_SIZE]);
+                if (address_space[i + PAGE_SIZE] == 0)
+                {
+                    printf(" 0x0%02x", i);
+                }
             }
         }
     }
 
     fclose(file_page_table);
+
+    printf("\n");
 }
 
-void print_console(int user_input, int vpn, int offset, int pfn, int pfn_plus_offset, unsigned char *address_space)
+void print_console(int user_input, int vpn, int offset, int pfn, int pfn_plus_offset, unsigned char *address_space, int is_swap)
 {
     printf("Address: 0x%X\n", user_input);
     printf("VPN: 0x%X\n", vpn);
     printf("Offset: 0x%X\n", offset);
     printf("PFN: 0x%02X\n", pfn);
-    printf("New PFN + Offset: 0x0%05X", pfn_plus_offset);
+    if (is_swap == 1)
+    {
+        printf("New PFN + Offset: 0x0%05X", pfn_plus_offset);
+    }
+    else
+    {
+        printf("PFN + Offset: 0x0%05X", pfn_plus_offset);
+    }
     printf("\nContent: %c\n", address_space[pfn_plus_offset]);
 }
 
@@ -203,7 +219,8 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
         printf("Swapped content from disk to physical memory.\n");
         printf("----------------------------------------------------\n");
 
-        print_console(user_input, vpn, offset, pfn, pfn_plus_offset, address_space);
+        print_console(user_input, vpn, offset, pfn, pfn_plus_offset, address_space, 1);
+        write_files(address_space, disk_space);
     }
     else if (address_space[pfn_plus_offset] == '~')
     {
@@ -211,8 +228,13 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
     }
     else
     {
-        print_console(user_input, vpn, offset, pfn, pfn_plus_offset, address_space);
+        print_console(user_input, vpn, offset, pfn, pfn_plus_offset, address_space, 0);
     }
+}
+
+void print_description()
+{
+    printf("");
 }
 
 void run()
@@ -226,10 +248,11 @@ void run()
     populate_address_space(address_space);
     populate_disk_space(disk_space, address_space);
     write_files(address_space, disk_space);
+    print_description();
 
     while (1)
     {
-        printf("----------------------------------------------------\n\n");
+        printf("----------------------------------------------------\n");
         printf("Please enter a virtual memory address (0x____): ");
         scanf("%X", &user_input);
         translate_address(user_input, address_space, disk_space);
