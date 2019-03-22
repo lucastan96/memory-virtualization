@@ -1,7 +1,7 @@
 default: link
 
 link: dist/main.o dist/util.o
-	gcc dist/main.o dist/util.o -o dist/main
+	gcc dist/main.o dist/util.o -o dist/simulate
 
 dist/main.o: main.c
 	gcc -c -Wall main.c -o dist/main.o

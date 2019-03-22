@@ -155,6 +155,16 @@ void write_files(unsigned char *address_space, unsigned char *disk_space)
     fclose(file_page_table);
 }
 
+void print_console(int user_input, int vpn, int offset, int pfn, int pfn_plus_offset, unsigned char *address_space)
+{
+    printf("Address: 0x%X\n", user_input);
+    printf("VPN: 0x%X\n", vpn);
+    printf("Offset: 0x%X\n", offset);
+    printf("PFN: 0x%02X\n", pfn);
+    printf("New PFN + Offset: 0x0%05X", pfn_plus_offset);
+    printf("\nContent: %c\n", address_space[pfn_plus_offset]);
+}
+
 void translate_address(int user_input, unsigned char *address_space, unsigned char *disk_space)
 {
     int vpn = user_input >> 8;
@@ -163,7 +173,9 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
     int offset_mask = 0x00FF;
     int offset = user_input & offset_mask;
 
-    int result = (pfn << 8) + offset;
+    int pfn_plus_offset = (pfn << 8) + offset;
+
+    printf("----------------------------------------------------\n");
 
     if (address_space[vpn + PAGE_SIZE] == 0)
     {
@@ -185,18 +197,21 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
 
         address_space[vpn] = free_frame;
         address_space[vpn + 256] = 1;
-        result = (free_frame << 8) + offset;
+        pfn_plus_offset = (free_frame << 8) + offset;
 
-        // output address, vpn (virtual page number), offset, pfn (physical frame number), pfn bit shifted (result)
-        printf("Swapped: %c\n", address_space[result]);
+        printf("Page fault exception encountered.\n");
+        printf("Swapped content from disk to physical memory.\n");
+        printf("----------------------------------------------------\n");
+
+        print_console(user_input, vpn, offset, pfn, pfn_plus_offset, address_space);
     }
-    else if (address_space[result] == '!')
+    else if (address_space[pfn_plus_offset] == '~')
     {
-        printf("No result found.\n");
+        printf("Address not used.\n");
     }
     else
     {
-        printf("%c\n", address_space[result]);
+        print_console(user_input, vpn, offset, pfn, pfn_plus_offset, address_space);
     }
 }
 
@@ -214,6 +229,8 @@ void run()
 
     while (1)
     {
+        printf("----------------------------------------------------\n\n");
+        printf("Please enter a virtual memory address (0x____): ");
         scanf("%X", &user_input);
         translate_address(user_input, address_space, disk_space);
     }
