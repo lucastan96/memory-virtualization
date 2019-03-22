@@ -198,22 +198,21 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
         int free_frame = 0;
         for (int i = 0; i < PAGE_SIZE; ++i)
         {
-            if (address_space[i] == '~')
+            if (address_space[i] == '~' && free_frame == 0)
             {
                 free_frame = (address_space[i - 1] + 1);
+                address_space[i] = free_frame;
+                address_space[i + PAGE_SIZE] = 1;
+                pfn_plus_offset = (free_frame << 8) + offset;
             }
         }
 
-        int disk_space_pos = 0;
+        int disk_space_pos = pfn;
         for (int i = free_frame * 256; i < (free_frame * 256) + 256; ++i)
         {
             address_space[i] = disk_space[disk_space_pos];
             ++disk_space_pos;
         }
-
-        address_space[vpn] = free_frame;
-        address_space[vpn + 256] = 1;
-        pfn_plus_offset = (free_frame << 8) + offset;
 
         printf("Page fault exception encountered.\n");
         printf("Swapped content from disk to physical memory.\n");
