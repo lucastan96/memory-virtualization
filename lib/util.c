@@ -35,8 +35,9 @@ void populate_address_space(unsigned char *address_space)
         address_space[i] = generate_random_char();
     }
 
-    int num_of_frames = (ending_address - starting_address) / PAGE_SIZE + 1;
     int starting_frame = starting_address / PAGE_SIZE;
+    int ending_frame = ending_address / PAGE_SIZE;
+    int num_of_frames = ending_frame - starting_frame;
 
     for (int i = 0; i <= num_of_frames; ++i)
     {
