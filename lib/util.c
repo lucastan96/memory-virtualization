@@ -195,6 +195,9 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
 
     if (address_space[vpn + PAGE_SIZE] == 0)
     {
+        printf("Page fault exception encountered.\n");
+        printf("Translating address...\n");
+
         int free_frame = 0;
         for (int i = 0; i < PAGE_SIZE; ++i)
         {
@@ -214,7 +217,6 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
             ++disk_space_pos;
         }
 
-        printf("Page fault exception encountered.\n");
         printf("Swapped content from disk to physical memory.\n");
         printf("----------------------------------------------------\n");
 
@@ -231,11 +233,6 @@ void translate_address(int user_input, unsigned char *address_space, unsigned ch
     }
 }
 
-void print_description()
-{
-    printf("");
-}
-
 void run()
 {
     unsigned char *address_space = malloc(ADDRESS_SPACE_SIZE);
@@ -247,7 +244,6 @@ void run()
     populate_address_space(address_space);
     populate_disk_space(disk_space, address_space);
     write_files(address_space, disk_space);
-    print_description();
 
     while (1)
     {
